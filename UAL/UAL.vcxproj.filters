@@ -1,0 +1,21 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Project ToolsVersion="4.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <ItemGroup>
+    <Filter Include="UAL">
+      <UniqueIdentifier>{a96a41f6-7037-4c4c-8583-96ba49522760}</UniqueIdentifier>
+    </Filter>
+  </ItemGroup>
+  <ItemGroup>
+    <ClInclude Include="..\include\UAL\ual.h">
+      <Filter>UAL</Filter>
+    </ClInclude>
+    <ClInclude Include="..\include\UAL\ual_structs.h">
+      <Filter>UAL</Filter>
+    </ClInclude>
+  </ItemGroup>
+  <ItemGroup>
+    <ClCompile Include="..\include\UAL\ual-win32.cpp">
+      <Filter>UAL</Filter>
+    </ClCompile>
+  </ItemGroup>
+</Project>
