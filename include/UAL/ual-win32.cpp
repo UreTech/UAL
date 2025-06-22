@@ -1,19 +1,19 @@
 // UreTech Audio Library Win32 Implementation
 #include <UAL/ual.h>
+#include <UAL/ual_structs.h>
 
 #include <fstream>
 #include <vector>
 #include <cstdint>
 #include <stdexcept>
 #include <string>
-#include "ual_structs.h"
 #include <algorithm>
 #include <iostream>
 
 
 // some utility functions
 void writeBufferToFile(void* data, size_t data_size, const std::string& filename) {
-    std::ofstream file(filename);
+    std::ofstream file(filename, std::ios::binary);
     if (!file.is_open()) return;
 	file.write((const char*)data, data_size);
     file.close();
@@ -92,7 +92,7 @@ void UAL::ual_wav_to_uad(const char* wavFile, const char* uadFile)
 	header.sample_size = (16 / 8) * wavInfo.numChannels; // UAD only supports 16-bit samples for now (multiplied byt channel count)
 	header.sample_rate = wavInfo.sampleRate;
 	header.num_channels = wavInfo.numChannels;
-	header.num_samples = wavInfo.data.size() / header.sample_size;
+    header.num_samples = wavInfo.data.size() / header.sample_size;
 	header.data_size = wavInfo.data.size() * sizeof(int16_t);
 	header.data_offset = sizeof(UAD_Header);
 
@@ -100,7 +100,7 @@ void UAL::ual_wav_to_uad(const char* wavFile, const char* uadFile)
 	if (!rawUADFile) throw std::runtime_error("Memory allocation failed! CODE: 0x01");
 
 	memcpy(rawUADFile, &header, sizeof(UAD_Header));
-	memcpy(rawUADFile + sizeof(UAD_Header), wavInfo.data.data(), header.data_size);
+	memcpy(rawUADFile + header.data_offset, wavInfo.data.data(), wavInfo.data.size() * sizeof(int16_t));
 
 	writeBufferToFile(rawUADFile, sizeof(UAD_Header) + header.data_size, uadFile);
 	free(rawUADFile);
@@ -118,7 +118,7 @@ UAL::UAL_SampleBuffer UAL::ual_load_uad(const char* uad_file_path)
 	file.read((char*)&uadHeader, sizeof(UAL::UAD_Header));
 
 	result.data_size = uadHeader.data_size;
-    result.data = new uint8_t[result.data_size];
+    result.data = (uint8_t*)malloc(result.data_size);
 	result.sample_size = uadHeader.sample_size;
 	result.sample_rate = uadHeader.sample_rate;
 	result.num_samples = uadHeader.num_samples;
@@ -212,6 +212,12 @@ UAL::UAL_OUTPUT_DEVICE* UAL::ual_initalize_default_audio_device()
 
 void UAL::ual_destroy_audio_device(UAL_OUTPUT_DEVICE* device)
 {
+	// stop the worker thread and clear buffers
+    {
+        std::lock_guard<std::mutex> lock(device->buffer_mutex);
+        device->worker_status = uSTOPPED;
+        device->sample_buffers.clear();
+    }
     device->pAudioClient->Stop();
     device->pRenderClient->Release();
     device->pAudioClient->Release();

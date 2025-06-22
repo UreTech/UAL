@@ -8,16 +8,21 @@ using namespace UAL;
 int main() {
 	try {
 
-		//ual_wav_to_uad("test.wav", "test.uad");
+		ual_wav_to_uad("test.wav", "test.uad");
 
 		UAL_OUTPUT_DEVICE* device = ual_initalize_default_audio_device();
 
 		ual_start_audio_stream(device);
 
-		UAL_SampleBuffer test = ual_load_wav("test.wav");
+		UAL_SampleBuffer test = ual_load_uad("test.uad");
+		//UAL_SampleBuffer test2 = ual_load_wav("test.wav");
 		UAL_ADD_FLAG(test.flags, UAL_SBF_LOOP_FLAG_BIT);
+		//UAL_ADD_FLAG(test2.flags, UAL_SBF_LOOP_FLAG_BIT);
+		
+		//std::cout << memcmp(test.data, test2.data, test.data_size) << std::endl;
 		
 		ual_add_sample_to_stream(device, test);
+		//ual_add_sample_to_stream(device, test2);
 
 		while (1);
 
